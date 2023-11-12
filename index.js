@@ -77,16 +77,14 @@ function generate_message_alert(body) {
 
 function send_to_telegram(message){
   request.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, JSON.stringify({"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "MarkdownV2"}), (out)  => {
-    res.send("ok\n")
-    res.end()
+    return 'ok'
   })
 }
 
 function send_to_slack(alert){
   data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
   request.post(process.env.SLACK_INCOMING_WEBHOOK, data, (out)  => {
-    res.send("ok\n")
-    res.end()
+    return 'ok'
   });
 }
 
@@ -146,6 +144,8 @@ app.all("/message", (req, res) => {
   var message = req.query.text || req.body.text
   const alert = generate_message_alert(message)
   send_notification(alert)
+
+  res.send('ok\n');
 })
 
 
@@ -179,6 +179,7 @@ app.post("/c", async (req, res) => {
     const alert = generate_blind_xss_alert(data)
 
     send_notification(alert)
+    res.send('ok\n');
 })
 
 /**
