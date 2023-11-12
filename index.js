@@ -18,8 +18,8 @@ const slack_incoming_webhook = process.env.SLACK_INCOMING_WEBHOOK
 const telegram_token = process.env.TELEGRAM_TOKEN
 const telegram_chat_id = process.env.TELEGRAM_CHAT_ID
 
-const slack_notification = process.env.SLACK_NOTIFICATION
-const telegram_notification = process.env.TELEGRAM_NOTIFICATION
+const slack_notification = (process.env.SLACK_NOTIFICATION === 'true')
+const telegram_notification = (process.env.TELEGRAM_NOTIFICATION === 'true')
 
 const app = express();
 app.use(cors());
