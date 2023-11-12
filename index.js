@@ -75,8 +75,15 @@ function generate_message_alert(body) {
   return alert
 }
 
+const escapeSpecChars = (text) => {
+  // Use {} and reverse markdown carefully.
+  const parse = text.replace(/([\\\{\}_*\[\]()~`>\#\+\-=|\.!])/g, "\\$1");
+  const reparse = parse.replace(/\\\\([\{\}_*\[\]()~`>\#\+\-=|\.!])/g, "$1");
+  return reparse;
+};
+
 function send_to_telegram(message){
-  data = {"chat_id": telegram_chat_id, "text": message, "parse_mode": "MarkdownV2"}
+  data = {"chat_id": telegram_chat_id, "text": escapeSpecChars(message), "parse_mode": "MarkdownV2"}
   request.post(`https://api.telegram.org/bot${telegram_token}/sendMessage`, {json: data}, function(error, resp, body){
     console.log(error);
     // console.log(resp);
