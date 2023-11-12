@@ -8,6 +8,7 @@ var cors = require("cors");
 const process = require("process");
 var request = require("request");
 const path = require("path")
+const { Client, GatewayIntentBits } = require('discord.js');
 
 // Support local development with .env
 require('dotenv').config()
@@ -17,9 +18,24 @@ const imgbb_api_key = process.env.IMGBB_API_KEY
 const slack_incoming_webhook = process.env.SLACK_INCOMING_WEBHOOK
 const telegram_token = process.env.TELEGRAM_TOKEN
 const telegram_chat_id = process.env.TELEGRAM_CHAT_ID
+const discord_token = process.env.DISCORD_TOKEN
+const discord_channel_id = process.env.DISCORD_CHANNEL_ID
 
 const slack_notification = (process.env.SLACK_NOTIFICATION === 'true')
 const telegram_notification = (process.env.TELEGRAM_NOTIFICATION === 'true')
+const discord_notification = (process.env.DOCKER_NOTIFICATION === 'true')
+
+if(discord_notification){
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
+  });
+  
+  client.login(discord_token); 
+}
 
 const app = express();
 app.use(cors());
@@ -59,13 +75,14 @@ function generate_callback_alert(headers, data, url) {
   var alert = "*XSSless: Out-of-Band Callback Alert*\n"
   alert += `• *IP Address:* \`${data["Remote IP"]}\`\n`
   alert += `• *Request URI:* \`${url}\`\n`
+  alert += `• *Host:* \`${data['host']}\`\n`
 
   // Add all the headers
-  for (var key in headers) {
-    if (headers.hasOwnProperty(key)) {
-      alert += `• *${key}:* \`${headers[key]}\`\n`
-    }
-}
+//   for (var key in headers) {
+//     if (headers.hasOwnProperty(key)) {
+//       alert += `• *${key}:* \`${headers[key]}\`\n`
+//     }
+// }
   return(alert)
 }
 
@@ -100,6 +117,19 @@ function send_to_slack(alert){
   });
 }
 
+function send_to_discord(messageContent) {
+  messageContent = escapeSpecChars(messageContent)
+  const channel = client.channels.cache.get(discord_channel_id);
+
+  if (channel) {
+    channel.send(messageContent)
+      .then(sentMessage => console.log(`Message sent: ${sentMessage.content}`))
+      .catch(error => console.error(`Error sending message: ${error}`));
+  } else {
+    console.error(`Channel with ID ${discord_channel_id} not found.`);
+  }
+}
+
 function send_notification(data){
   if(slack_notification){
     send_to_slack(data)
@@ -107,6 +137,10 @@ function send_notification(data){
 
   if(telegram_notification){
     send_to_telegram(data)
+  }
+  
+  if(discord_notification){
+    send_to_discord(data)
   }
 }
 
@@ -241,8 +275,16 @@ app.all("/*", (req, res) => {
   res.sendFile(path.join(__dirname + '/payload.js'));
 })
 
-
-app.listen(port, err => {
+if(discord_notification){
+  client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag}`);
+    app.listen(port, () => {
+      console.log(`> Ready On Server http://localhost:${port}`);
+    });
+  });
+}else{
+  app.listen(port, err => {
     if (err) throw err
     console.log(`> Ready On Server http://localhost:${port}`)
-})
+  })
+}
