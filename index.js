@@ -76,14 +76,14 @@ function generate_message_alert(body) {
 }
 
 function send_to_telegram(message){
-  request.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, JSON.stringify({"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "MarkdownV2"}), (out)  => {
+  request.post(`https://api.telegram.org/bot${telegram_token}/sendMessage`, JSON.stringify({"chat_id": telegram_chat_id, "text": message, "parse_mode": "MarkdownV2"}), (out)  => {
     return 'ok'
   })
 }
 
 function send_to_slack(alert){
   data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
-  request.post(process.env.SLACK_INCOMING_WEBHOOK, data, (out)  => {
+  request.post(slack_incoming_webhook, data, (out)  => {
     return 'ok'
   });
 }
