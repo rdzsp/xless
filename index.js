@@ -23,7 +23,7 @@ const discord_channel_id = process.env.DISCORD_CHANNEL_ID
 
 const slack_notification = (process.env.SLACK_NOTIFICATION === 'true')
 const telegram_notification = (process.env.TELEGRAM_NOTIFICATION === 'true')
-const discord_notification = (process.env.DOCKER_NOTIFICATION === 'true')
+const discord_notification = (process.env.DISCORD_NOTIFICATION === 'true')
 
 if(discord_notification){
   const client = new Client({
