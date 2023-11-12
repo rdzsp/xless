@@ -15,6 +15,11 @@ require('dotenv').config()
 const port = process.env.PORT || 3000;
 const imgbb_api_key = process.env.IMGBB_API_KEY
 const slack_incoming_webhook = process.env.SLACK_INCOMING_WEBHOOK
+const telegram_token = process.env.TELEGRAM_TOKEN
+const telegram_chat_id = process.env.TELEGRAM_CHAT_ID
+
+const slack_notification = process.env.SLACK_NOTIFICATION
+const telegram_notification = process.env.TELEGRAM_NOTIFICATION
 
 const app = express();
 app.use(cors());
@@ -70,6 +75,31 @@ function generate_message_alert(body) {
   return alert
 }
 
+function send_to_telegram(message){
+  request.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, JSON.stringify({"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "MarkdownV2"}), (out)  => {
+    res.send("ok\n")
+    res.end()
+  })
+}
+
+function send_to_slack(alert){
+  data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
+  request.post(process.env.SLACK_INCOMING_WEBHOOK, data, (out)  => {
+    res.send("ok\n")
+    res.end()
+  });
+}
+
+function send_notification(data){
+  if(slack_notification){
+    send_to_slack(data)
+  }
+
+  if(telegram_notification){
+    send_to_telegram(data)
+  }
+}
+
 async function uploadImage(image) {
 
   // Return new promise
@@ -115,12 +145,7 @@ app.get("/examples", (req, res) => {
 app.all("/message", (req, res) => {
   var message = req.query.text || req.body.text
   const alert = generate_message_alert(message)
-  data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
-
-  request.post(process.env.SLACK_INCOMING_WEBHOOK, data, (out)  => {
-    res.send("ok\n")
-    res.end()
-  });
+  send_notification(alert)
 })
 
 
@@ -152,12 +177,8 @@ app.post("/c", async (req, res) => {
     // Now handle the regular Slack alert
     data["Remote IP"] = req.headers["x-forwarded-for"] || req.connection.remoteAddress
     const alert = generate_blind_xss_alert(data)
-    data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
 
-    request.post(slack_incoming_webhook, data, (out)  => {
-      res.send("ok\n")
-      res.end()
-    });
+    send_notification(alert)
 })
 
 /**
@@ -202,11 +223,9 @@ app.all("/*", (req, res) => {
   var data = req.body
   data["Remote IP"] = req.headers["x-forwarded-for"] || req.connection.remoteAddress
   const alert = generate_callback_alert(headers, data, req.url)
-  data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
 
-  request.post(slack_incoming_webhook, data, (out)  => {
-    res.sendFile(path.join(__dirname + '/payload.js'))
-  });
+  send_notification(alert);
+  res.sendFile(path.join(__dirname + '/payload.js'));
 })
 
 
