@@ -26,7 +26,7 @@ const telegram_notification = (process.env.TELEGRAM_NOTIFICATION === 'true')
 const discord_notification = (process.env.DISCORD_NOTIFICATION === 'true')
 
 if(discord_notification){
-  const client = new Client({
+  var client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
