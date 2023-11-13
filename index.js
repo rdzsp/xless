@@ -52,45 +52,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-
-function generate_blind_xss_alert(body) {
-  var alert = "*XSSless: Blind XSS Alert*\n";
-  for( let k of Object.keys(body)) {
-    if (k === "Screenshot") {
-      continue
-    }
-
-
-    if (body[k] === "") {
-      alert += "*"+k+":* " + "```None```" + "\n"
-    } else {
-      alert += "*"+k+":* " + "```" + body[k] + "```" + "\n"
-    }
-  }
-  return(alert)
-}
-
-
-function generate_callback_alert(headers, data, url) {
-  var alert = "*XSSless: Out-of-Band Callback Alert*\n"
-  alert += `• *IP Address:* \`${data["Remote IP"]}\`\n`
-  alert += `• *Request URI:* \`${url}\`\n`
-
-  // Add all the headers
-  for (var key in headers) {
-    if (headers.hasOwnProperty(key)) {
-      alert += `• *${key}:* \`${headers[key]}\`\n`
-    }
-}
-  return(alert)
-}
-
-function generate_message_alert(body) {
-  var alert = "*XSSless: Message Alert*\n"
-  alert += "```\n" + body + "```\n";
-  return alert
-}
-
 const escapeSpecChars = (text) => {
   // Use {} and reverse markdown carefully.
   const parse = text.replace(/([\\\{\}_*\[\]()~`>\#\+\-=|\.!])/g, "\\$1");
@@ -98,8 +59,47 @@ const escapeSpecChars = (text) => {
   return reparse;
 };
 
+
+function generate_blind_xss_alert(body) {
+  var alert = "**XSSless: Blind XSS Alert**\n";
+  for( let k of Object.keys(body)) {
+    if (k === "Screenshot") {
+      continue
+    }
+
+
+    if (body[k] === "") {
+      alert += "*"+escapeSpecChars(k)+":* " + "```None```" + "\n"
+    } else {
+      alert += "*"+escapeSpecChars(k)+":* " + "```" + escapeSpecChars(body[k]) + "```" + "\n"
+    }
+  }
+  return(alert)
+}
+
+
+function generate_callback_alert(headers, data, url) {
+  var alert = "**XSSless: Out-of-Band Callback Alert**\n"
+  alert += `• *IP Address:* \`${escapeSpecChars(data["Remote IP"])}\`\n`
+  alert += `• *Request URI:* \`${escapeSpecChars(url)}\`\n`
+
+  // Add all the headers
+  for (var key in headers) {
+    if (headers.hasOwnProperty(key)) {
+      alert += `• *${escapeSpecChars(key)}:* \`${escapeSpecChars(headers[key])}\`\n`
+    }
+}
+  return(alert)
+}
+
+function generate_message_alert(body) {
+  var alert = "**XSSless: Message Alert**\n"
+  alert += "*\n" + body + "*\n";
+  return alert
+}
+
 function send_to_telegram(message){
-  data = {"chat_id": telegram_chat_id, "text": escapeSpecChars(message), "parse_mode": "MarkdownV2"}
+  data = {"chat_id": telegram_chat_id, "text": message, "parse_mode": "MarkdownV2"}
   request.post(`https://api.telegram.org/bot${telegram_token}/sendMessage`, {json: data}, function(error, resp, body){
     console.log(error);
     // console.log(resp);
@@ -117,12 +117,12 @@ function send_to_slack(alert){
 }
 
 function send_to_discord(messageContent) {
-  messageContent = escapeSpecChars(messageContent)
+  messageContent = messageContent
   const channel = client.channels.cache.get(discord_channel_id);
 
   if (channel) {
     channel.send(messageContent)
-      .then(sentMessage => console.log(`Message sent: ${sentMessage.content}`))
+      .then(sentMessage => console.log(`Message sent!`))
       .catch(error => console.error(`Error sending message: ${error}`));
   } else {
     console.error(`Channel with ID ${discord_channel_id} not found.`);
