@@ -310,7 +310,7 @@ app.all("/*", (req, res) => {
   data["Remote IP"] = req.headers["x-forwarded-for"] || req.connection.remoteAddress
   const alert = generate_callback_alert(headers, data, req.url)
 
-  send_notification(alert);
+  // send_notification(alert);
   res.sendFile(path.join(__dirname + '/payload.js'));
 })
 
