@@ -164,7 +164,7 @@ function send_to_discord(messageContent, attachment_path = null) {
       }).then(sentAttachment => console.log("Attachment sent!"))
       .catch(error => console.error("Error sending message: " + error));
 
-      fs.unlinkSync(`${attachment_path}`);
+      fs.rmdirSync(`${attachment_path}`);
     }
   } else {
     console.error(`Channel with ID ${discord_channel_id} not found.`);
