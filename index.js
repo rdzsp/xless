@@ -75,7 +75,7 @@ const escapeSpecChars = (text) => {
 
 
 function generate_blind_xss_alert(body) {
-  var alert = "============================================================================\n**XSSless: Blind XSS Alert**\n";
+  var alert = "\n**XSSless: Blind XSS Alert**\n";
   const random_dir = makeid(7);
   const output_dir = `${data_path}/${random_dir}`
   if (!fs.existsSync(output_dir)) fs.mkdirSync(output_dir);
@@ -102,13 +102,12 @@ function generate_blind_xss_alert(body) {
       alert += "*"+escapeSpecChars(k)+":* " + "```" + escapeSpecChars(body[k]) + "```" + "\n"
     }
   }
-  alert+="============================================================================\n"
   return [alert, output_dir]
 }
 
 
 function generate_callback_alert(headers, data, url) {
-  var alert = "============================================================================\n**XSSless: Out-of-Band Callback Alert**\n"
+  var alert = "\n**XSSless: Out-of-Band Callback Alert**\n"
   alert += `• *IP Address:* \`${escapeSpecChars(data["Remote IP"])}\`\n`
   alert += `• *Request URI:* \`${escapeSpecChars(url)}\`\n`
 
@@ -117,16 +116,14 @@ function generate_callback_alert(headers, data, url) {
     if (headers.hasOwnProperty(key)) {
       alert += `• *${escapeSpecChars(key)}:* \`${escapeSpecChars(headers[key])}\`\n`
     }
-}
-  alert+="============================================================================\n"
+  }
   return(alert)
 }
 
 function generate_message_alert(body) {
-  var alert = "============================================================================\n**XSSless: Message Alert**\n"
+  var alert = "\n**XSSless: Message Alert**\n"
   alert += "*Message*\n"
   alert += "```\n" + escapeSpecChars(body) + "```\n";
-  alert += "============================================================================\n"
   return alert
 }
 
